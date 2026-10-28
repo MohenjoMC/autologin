@@ -1,5 +1,5 @@
-# Build one jar for every supported Minecraft 26.x release, on Blacksmith
-# runners. Every version compiles from this one source tree via -P overrides.
+# Build AutoLogin for Minecraft 1.21.11. The 26.x line lives on main and gets
+# a version matrix; this legacy branch targets one release only.
 name: build
 
 on:
@@ -10,25 +10,6 @@ on:
 jobs:
   build:
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - mc: "26.1"
-            api: "0.155.3+26.1.2"
-            mc_dep: "~26.1"
-          - mc: "26.1.1"
-            api: "0.155.3+26.1.2"
-            mc_dep: "~26.1"
-          - mc: "26.1.2"
-            api: "0.155.3+26.1.2"
-            mc_dep: "~26.1"
-          - mc: "26.2"
-            api: "0.161.0+26.2"
-            mc_dep: "~26.2"
-          - mc: "26.3"
-            api: "0.165.0+26.3"
-            mc_dep: "~26.3"
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -36,24 +17,21 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v6
 
-      - name: Set up Java 25
+      - name: Set up Java 21
         uses: actions/setup-java@v5
         with:
-          java-version: "25"
+          java-version: "21"
           distribution: "microsoft"
 
-      - name: Build for Minecraft ${{ matrix.mc }}
+      - name: Build
         run: |
           chmod +x ./gradlew
-          ./gradlew build --stacktrace \
-            -Pminecraft_version="${{ matrix.mc }}" \
-            -Pfabric_api_version="${{ matrix.api }}" \
-            -Pminecraft_dependency="${{ matrix.mc_dep }}"
+          ./gradlew build --stacktrace
 
-      - name: Upload Minecraft ${{ matrix.mc }} jars
+      - name: Upload jar
         uses: actions/upload-artifact@v7
         with:
-          name: autologin-${{ matrix.mc }}
+          name: autologin-1.21.11
           path: build/libs/*.jar
           if-no-files-found: error
           retention-days: 14
