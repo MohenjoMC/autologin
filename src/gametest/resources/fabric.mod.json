@@ -1,0 +1,21 @@
+{
+	"schemaVersion": 1,
+	"id": "autologin-gametest",
+	"version": "1.0.0",
+	"name": "AutoLogin client gametest",
+	"environment": "client",
+	"entrypoints": {
+		"main": [
+			"com.monhenjo.autologin.gametest.TestLoginCommand"
+		],
+		"fabric-client-gametest": [
+			"com.monhenjo.autologin.gametest.AutoLoginClientGameTest"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.14.0",
+		"fabric-api": "*",
+		"fabric-client-gametest-api-v1": "*",
+		"autologin": "*"
+	}
+}

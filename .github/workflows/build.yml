@@ -28,7 +28,7 @@ jobs:
       - name: Build
         run: |
           chmod +x ./gradlew
-          ./gradlew build --stacktrace
+          ./gradlew build gametestClasses --stacktrace
 
       - name: Upload jar
         uses: actions/upload-artifact@v7
