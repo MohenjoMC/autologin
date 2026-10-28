@@ -3,7 +3,7 @@
 	"id": "autologin",
 	"version": "${version}",
 	"name": "AutoLogin",
-	"description": "Client-side Fabric mod that automatically logs you in on servers that ask for it.",
+	"description": "Password manager for Minecraft servers that ask for a password. Detects login prompts, keeps passwords encrypted on disk, and sends the one you pick.",
 	"authors": [
 		"Mohenjo"
 	],
@@ -17,6 +17,12 @@
 	"entrypoints": {
 		"client": [
 			"com.monhenjo.autologin.client.AutoLoginClient"
+		],
+		"modmenu": [
+			"com.monhenjo.autologin.client.integration.ModMenuIntegration"
+		],
+		"main": [
+			"com.monhenjo.autologin.AutoLogin"
 		]
 	},
 	"mixins": [
@@ -29,6 +35,10 @@
 		"fabricloader": ">=0.20.1",
 		"minecraft": "${minecraft_dependency}",
 		"java": ">=21",
-		"fabric-api": "*"
+		"fabric-api": "*",
+		"cloth-config": "*"
+	},
+	"suggests": {
+		"modmenu": "*"
 	}
 }
