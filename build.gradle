@@ -20,6 +20,14 @@ repositories {
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
+	maven {
+		name = "Shedaniel (Cloth Config)"
+		url = "https://maven.shedaniel.me/"
+	}
+	maven {
+		name = "Terraformers (Mod Menu)"
+		url = "https://maven.terraformersmc.com/releases/"
+	}
 }
 
 loom {
@@ -33,6 +41,17 @@ loom {
 	}
 }
 
+// A real client, a real world, and a real server command to log in against.
+fabricApi {
+	configureTests {
+		createSourceSet = true
+		modId = "autologin-gametest"
+		enableGameTests = false
+		enableClientGameTests = true
+		eula = true
+	}
+}
+
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -40,6 +59,26 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Settings screen and the JSON behind it.
+	implementation "me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}"
+
+	// Mod Menu is soft: compiled against, never required, and only loaded when present.
+	compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+
+	// Unit tests. The interesting logic (detection, vault, flow) carries no Minecraft classes,
+	// so it runs as a plain JUnit suite with no client boot.
+	testImplementation platform("org.junit:junit-bom:5.11.4")
+	testImplementation "org.junit.jupiter:junit-jupiter"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		events "failed"
+		exceptionFormat "full"
+	}
 }
 
 processResources {
