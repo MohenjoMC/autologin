@@ -16,18 +16,28 @@ jobs:
         include:
           - mc: "26.1"
             api: "0.155.3+26.1.2"
+            cloth: "26.1.154"
+            modmenu: "18.0.2"
             mc_dep: "~26.1"
           - mc: "26.1.1"
             api: "0.155.3+26.1.2"
+            cloth: "26.1.154"
+            modmenu: "18.0.2"
             mc_dep: "~26.1"
           - mc: "26.1.2"
             api: "0.155.3+26.1.2"
+            cloth: "26.1.154"
+            modmenu: "18.0.2"
             mc_dep: "~26.1"
           - mc: "26.2"
             api: "0.161.0+26.2"
+            cloth: "26.2.155"
+            modmenu: "20.0.3"
             mc_dep: "~26.2"
           - mc: "26.3"
             api: "0.165.0+26.3"
+            cloth: "26.3.159"
+            modmenu: "21.0.0"
             mc_dep: "~26.3"
     steps:
       - name: Checkout
@@ -45,9 +55,11 @@ jobs:
       - name: Build for Minecraft ${{ matrix.mc }}
         run: |
           chmod +x ./gradlew
-          ./gradlew build --stacktrace \
+          ./gradlew build gametestClasses --stacktrace \
             -Pminecraft_version="${{ matrix.mc }}" \
             -Pfabric_api_version="${{ matrix.api }}" \
+            -Pcloth_config_version="${{ matrix.cloth }}" \
+            -Pmodmenu_version="${{ matrix.modmenu }}" \
             -Pminecraft_dependency="${{ matrix.mc_dep }}"
 
       - name: Upload Minecraft ${{ matrix.mc }} jars
