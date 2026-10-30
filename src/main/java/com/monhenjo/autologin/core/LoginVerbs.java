@@ -92,6 +92,14 @@ public final class LoginVerbs {
 
 	/** The full command line to hand to {@code ClientPacketListener#sendCommand}. */
 	public static String build(String verb, String password) {
+		return build(verb, password, 1);
+	}
+
+	/**
+	 * @param repeats how many times the password belongs on the line: 1 for
+	 *                {@code /login <password>}, 2 for {@code /register <password> <password>}
+	 */
+	public static String build(String verb, String password, int repeats) {
 		if (!isAllowed(verb)) {
 			throw new IllegalArgumentException("refusing to send a password to a non-auth command: " + verb);
 		}
@@ -100,7 +108,23 @@ public final class LoginVerbs {
 			throw new IllegalArgumentException("password cannot be expressed as a chat command");
 		}
 
-		return "/" + verb.toLowerCase(Locale.ROOT) + " " + password;
+		StringBuilder line = new StringBuilder("/").append(verb.toLowerCase(Locale.ROOT));
+
+		// Only registration ever repeats the password. A custom rule cannot talk the mod into
+		// sending it more times than the command shape has room for.
+		int allowed = registrationVerb(verb) ? 2 : 1;
+		int times = Math.min(Math.max(1, repeats), allowed);
+
+		for (int i = 0; i < times; i++) {
+			line.append(' ').append(password);
+		}
+
+		return line.toString();
+	}
+
+	private static boolean registrationVerb(String verb) {
+		String lower = verb.toLowerCase(Locale.ROOT);
+		return lower.startsWith("reg") || lower.startsWith("sign");
 	}
 
 	/** A version safe to put in the log: the verb, never the argument. */

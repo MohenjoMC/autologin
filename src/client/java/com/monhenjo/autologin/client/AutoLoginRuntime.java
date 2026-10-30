@@ -224,6 +224,13 @@ public final class AutoLoginRuntime {
 		// stale state and must not masquerade as "the prompt offered this".
 		if (flow.awaitingCredentials()) {
 			offered = store.forServer(serverKey);
+
+			// Show the account the player just saved, in the prompt they are still looking at.
+			flow.activePrompt().ifPresent(prompt -> {
+				if (Configs.get().chatList) {
+					PromptRenderer.show(this, new LoginFlow.Decision(prompt, offered, false), serverKey);
+				}
+			});
 		}
 
 		return account;

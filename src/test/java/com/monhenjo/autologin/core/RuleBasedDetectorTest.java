@@ -40,6 +40,22 @@ class RuleBasedDetectorTest {
 		LoginPrompt prompt = detect("Please register with the command: /register <password> <password>");
 		assertEquals(LoginKind.REGISTER, prompt.kind());
 		assertEquals("register", prompt.verb());
+		assertEquals(2, prompt.passwordArguments(), "AuthMe wants the password twice");
+	}
+
+	@Test
+	void registerWithOnePlaceholderWantsItOnce() {
+		assertEquals(1, detect("Please register: /register [password]").passwordArguments());
+	}
+
+	@Test
+	void loginAlwaysTakesOnePassword() {
+		assertEquals(1, detect("Please login with /login <password>").passwordArguments());
+	}
+
+	@Test
+	void registrationCountsAsAuthenticated() {
+		assertEquals(LoginKind.AUTHENTICATED, detect("Successfully registered!").kind());
 	}
 
 	@Test

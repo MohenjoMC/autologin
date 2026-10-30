@@ -15,6 +15,15 @@ class LoginVerbsTest {
 	}
 
 	@Test
+	void registerRepeatsThePasswordWhenThePromptAsksForItTwice() {
+		// AuthMe, nLogin and LibreLogin all want /register <password> <password>.
+		assertEquals("/register hunter2 hunter2", LoginVerbs.build("register", "hunter2", 2));
+		assertEquals("/register hunter2", LoginVerbs.build("register", "hunter2", 1));
+		assertEquals("/login hunter2", LoginVerbs.build("login", "hunter2", 2),
+			"login takes the password once whatever the caller asks for");
+	}
+
+	@Test
 	void refusesVerbsThatAreNotAuthentication() {
 		// A server can print anything; the mod must not be talked into /msg or /pay.
 		assertFalse(LoginVerbs.isAllowed("msg"));
