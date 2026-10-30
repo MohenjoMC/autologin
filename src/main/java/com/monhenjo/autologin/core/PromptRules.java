@@ -23,11 +23,13 @@ public final class PromptRules {
 
 		// Register before login: "/register <password> <password>" also contains "/register".
 		rules.add(PromptRule.of("register.usage", LoginKind.REGISTER,
-			"/register\\s+(?:<[^>]*>|\\[[^\\]]*\\]|password)", "register"));
+			"/(?:register|reg|sign_?up)\\s+(?:<[^>]*>|\\[[^\\]]*\\]|password)", "register"));
+		// "Please, register" - AuthMe prints the comma, and it is the only thing left to match once
+		// the prompt starts using an alias instead of the full /register command.
 		rules.add(PromptRule.of("register.please", LoginKind.REGISTER,
-			"\\bplease\\s+(?:register|sign\\s?up)\\b", "register"));
+			"\\bplease,?\\s+(?:register|sign\\s?up)\\b", "register"));
 		rules.add(PromptRule.of("register.type", LoginKind.REGISTER,
-			"\\btype\\s+/register\\b", "register"));
+			"\\btype\\s+/(?:register|reg|sign_?up)\\b", "register"));
 		rules.add(PromptRule.of("register.not-registered", LoginKind.REGISTER,
 			"\\b(?:not|isn't)\\s+registered\\b", "register"));
 		// Servers that alias the command print e.g. "/reg <password> <password>" with no prose.
