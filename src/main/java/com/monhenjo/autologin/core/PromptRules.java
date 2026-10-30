@@ -64,6 +64,9 @@ public final class PromptRules {
 			"\\bsession\\s+(?:is\\s+)?(?:still\\s+)?(?:valid|restored|verified|active)\\b", "login"));
 		rules.add(PromptRule.of("auth.successful", LoginKind.AUTHENTICATED,
 			"\\bauthentication\\s+successful\\b", "login"));
+		// Registering is authenticating: AuthMe answers "/register" with "Successfully registered!".
+		rules.add(PromptRule.of("auth.registered", LoginKind.AUTHENTICATED,
+			"\\b(?:successfully|now)\\s+registered\\b", "register"));
 		rules.add(PromptRule.of("auth.welcome-back", LoginKind.AUTHENTICATED,
 			"\\bwelcome\\s+back\\b", "login"));
 		return List.copyOf(rules);

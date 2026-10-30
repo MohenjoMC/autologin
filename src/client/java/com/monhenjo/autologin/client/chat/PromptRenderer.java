@@ -24,7 +24,11 @@ public final class PromptRenderer {
 	}
 
 	public static void show(AutoLoginRuntime runtime, LoginFlow.Decision decision, String serverKey) {
-		ClientCompat.chat(Component.translatable("autologin.chat.header", ServerKey.display(serverKey))
+		String headerKey = decision.prompt().kind() == com.monhenjo.autologin.core.LoginKind.REGISTER
+			? "autologin.chat.header.register"
+			: "autologin.chat.header";
+
+		ClientCompat.chat(Component.translatable(headerKey, ServerKey.display(serverKey))
 			.withStyle(ChatFormatting.GOLD));
 
 		if (decision.options().isEmpty()) {

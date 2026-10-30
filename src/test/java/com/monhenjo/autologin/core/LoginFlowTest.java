@@ -30,7 +30,24 @@ class LoginFlowTest {
 	void burstOfIdenticalPromptsIsShownOnce() {
 		assertTrue(flow.onPrompt(loginPrompt(), List.of(main), 1_000L).isPresent());
 		assertTrue(flow.onPrompt(loginPrompt(), List.of(main), 1_500L).isEmpty());
-		assertTrue(flow.onPrompt(loginPrompt(), List.of(main), 5_000L).isPresent());
+		assertTrue(flow.onPrompt(loginPrompt(), List.of(main), 5_500L).isPresent());
+	}
+
+	@Test
+	void authMeTimerReprintsTheOptionsOncePerPrompt() {
+		// Captured from AuthMe 6.0.1: the plugin repeats its prompt every 5 seconds. The mod
+		// reprints its options at that cadence (so they stay on screen) but not for the duplicate
+		// that arrives when one message is handled on two threads.
+		int shown = 0;
+		for (long now = 0; now <= 20_000L; now += 5_000L) {
+			if (flow.onPrompt(loginPrompt(), List.of(main), now).isPresent()) {
+				shown++;
+			}
+			// duplicate of the same message, same instant
+			assertTrue(flow.onPrompt(loginPrompt(), List.of(main), now + 50L).isEmpty());
+		}
+
+		assertEquals(5, shown);
 	}
 
 	@Test
@@ -71,6 +88,15 @@ class LoginFlowTest {
 	@Test
 	void commandUsesTheVerbTheServerAskedFor() {
 		var prompt = new LoginPrompt(LoginKind.REGISTER, "register", "register.please", "Please register");
+		flow.onPrompt(prompt, List.of(main), 1_000L);
+
+		assertEquals("/register hunter2 hunter2", flow.commandFor(main).orElseThrow());
+	}
+
+	@Test
+	void commandFollowsTheArityThePromptPrinted() {
+		var prompt = new LoginPrompt(LoginKind.REGISTER, "register", "register.usage",
+			"Please register with the command: /register [password]", 1);
 		flow.onPrompt(prompt, List.of(main), 1_000L);
 
 		assertEquals("/register hunter2", flow.commandFor(main).orElseThrow());

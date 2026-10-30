@@ -16,8 +16,15 @@ import java.util.Optional;
  * decision at all; it can only report that the picker should be shown.
  */
 public final class LoginFlow {
-	/** Repeated copies of the same prompt inside this window are treated as one prompt. */
-	private static final long PROMPT_DEDUPE_MILLIS = 2_000L;
+	/**
+	 * Repeated copies of the same prompt inside this window are treated as one prompt.
+	 *
+	 * <p>AuthMe 6 re-sends its prompt every 5 seconds until the player answers, and chat only
+	 * holds a few lines, so the options have to be reprinted alongside it to stay on screen.
+	 * Shorter than the plugin's own timer, long enough to swallow the duplicate that arrives when
+	 * the same message is handled twice on the packet path.
+	 */
+	private static final long PROMPT_DEDUPE_MILLIS = 4_000L;
 
 	/** After this long without another prompt, the next one counts as a fresh attempt. */
 	private static final long ATTEMPT_DECAY_MILLIS = 60_000L;
@@ -107,8 +114,10 @@ public final class LoginFlow {
 			verb = "login";
 		}
 
+		int repeats = active == null ? 1 : active.passwordArguments();
+
 		try {
-			return Optional.of(LoginVerbs.build(verb, account.password()));
+			return Optional.of(LoginVerbs.build(verb, account.password(), repeats));
 		} catch (IllegalArgumentException e) {
 			return Optional.empty();
 		}

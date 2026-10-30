@@ -3,6 +3,8 @@ package com.monhenjo.autologin.core;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Pattern-based detection over {@link PromptRules}.
@@ -13,6 +15,8 @@ import java.util.Optional;
  * the mod would ask the user to pick a password for a session that is already open.
  */
 public final class RuleBasedDetector implements LoginDetector {
+	private static final Pattern PLACEHOLDER = Pattern.compile("<[^>]{1,40}>|\\[[^\\]]{1,40}\\]");
+
 	private final List<PromptRule> authenticated;
 	private final List<PromptRule> credential;
 
@@ -67,7 +71,34 @@ public final class RuleBasedDetector implements LoginDetector {
 
 	private static LoginPrompt prompt(PromptRule rule, String text) {
 		String verb = LoginVerbs.resolve(text, rule.kind(), rule.verb());
-		return new LoginPrompt(rule.kind(), verb, rule.id(), text);
+		return new LoginPrompt(rule.kind(), verb, rule.id(), text, passwordArguments(rule.kind(), text, verb));
+	}
+
+	/**
+	 * How many times the password belongs on the command line, read from the plugin's own usage
+	 * line: {@code /login <password>} takes one, {@code /register <password> <password>} two.
+	 *
+	 * <p>Registration is the case that matters - AuthMe, nLogin and LibreLogin all want the
+	 * password twice, and sending it once gets "Usage: /register <password> <password>" back.
+	 * Login never needs it twice, so that is pinned to one whatever the text says.
+	 */
+	static int passwordArguments(LoginKind kind, String text, String verb) {
+		if (kind != LoginKind.REGISTER) {
+			return 1;
+		}
+
+		int after = text.indexOf("/" + verb);
+		if (after < 0) {
+			return 2;
+		}
+
+		Matcher placeholders = PLACEHOLDER.matcher(text.substring(after + verb.length() + 1));
+		int count = 0;
+		while (count < 2 && placeholders.find()) {
+			count++;
+		}
+
+		return count == 0 ? 2 : count;
 	}
 
 	/** Collapses runs of whitespace so rules do not have to care about server formatting. */

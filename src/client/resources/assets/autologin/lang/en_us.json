@@ -3,6 +3,7 @@
 	"key.category.autologin.main": "AutoLogin",
 
 	"autologin.chat.header": "AutoLogin: %s wants you to log in",
+	"autologin.chat.header.register": "AutoLogin: %s wants you to register",
 	"autologin.chat.no-accounts": "No saved login for this server yet.",
 	"autologin.chat.add": "[+] add login",
 	"autologin.chat.add.tip": "Save a password for this server",

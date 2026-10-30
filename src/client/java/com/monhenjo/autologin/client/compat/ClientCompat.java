@@ -52,8 +52,17 @@ public final class ClientCompat {
 		}
 	}
 
+	/**
+	 * Opens a screen on the next client tick.
+	 *
+	 * <p>Not immediate on purpose: commands run from the chat box are executed inside
+	 * {@code ChatScreen.sendCommand}, and the chat screen closes itself right after that call
+	 * returns - which would wipe a screen opened synchronously. Deferring costs one tick and is
+	 * invisible.
+	 */
 	public static void openScreen(Screen screen) {
-		Minecraft.getInstance().setScreenAndShow(screen);
+		Minecraft client = Minecraft.getInstance();
+		client.execute(() -> client.setScreenAndShow(screen));
 	}
 
 	public static ClientPacketListener connection() {
