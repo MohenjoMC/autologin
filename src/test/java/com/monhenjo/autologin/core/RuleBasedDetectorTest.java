@@ -159,6 +159,26 @@ class RuleBasedDetectorTest {
 	}
 
 	@Test
+	void authMeAliasPromptsExactlyAsThePluginPrintsThem() {
+		// Captured from AuthMe 6.0.1 with the messages rewritten to aliases: the comma after
+		// "Please" is what has to match once the usage line says /reg instead of /register.
+		LoginPrompt register = detect("Please, register to the server with the command: /reg <password> <ConfirmPassword>");
+		assertEquals(LoginKind.REGISTER, register.kind());
+		assertEquals("reg", register.verb());
+		assertEquals(2, register.passwordArguments());
+
+		LoginPrompt login = detect("Please, login with the command: /l <password>");
+		assertEquals(LoginKind.LOGIN, login.kind());
+		assertEquals("l", login.verb());
+		assertEquals(1, login.passwordArguments());
+	}
+
+	@Test
+	void typeAnAliasedCommand() {
+		assertEquals(LoginKind.REGISTER, detect("Type /reg <password> <ConfirmPassword>").kind());
+	}
+
+	@Test
 	void aliasKeepsTheArityOfTheAliasedCommand() {
 		assertEquals(2, detect("/reg <password> <password>").passwordArguments());
 		assertEquals(1, detect("Please register with the command: /reg <password>").passwordArguments());
