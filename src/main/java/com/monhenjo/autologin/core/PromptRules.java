@@ -30,6 +30,9 @@ public final class PromptRules {
 			"\\btype\\s+/register\\b", "register"));
 		rules.add(PromptRule.of("register.not-registered", LoginKind.REGISTER,
 			"\\b(?:not|isn't)\\s+registered\\b", "register"));
+		// Servers that alias the command print e.g. "/reg <password> <password>" with no prose.
+		rules.add(PromptRule.of("register.starts-with-command", LoginKind.REGISTER,
+			"^\\s*(?:\\[[^\\]]*\\]\\s*)*/(?:register|reg|sign_?up)\\b", "register"));
 
 		rules.add(PromptRule.of("login.usage", LoginKind.LOGIN,
 			"/login\\s+(?:<[^>]*>|\\[[^\\]]*\\]|password|pass)", "login"));
