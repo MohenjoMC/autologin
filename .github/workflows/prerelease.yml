@@ -21,6 +21,12 @@ on:
 permissions:
   contents: write
 
+# Two dispatches for the same tag must not race over the release: the second would
+# delete the first one's tag while the first is still uploading.
+concurrency:
+  group: prerelease-${{ inputs.tag }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: blacksmith-4vcpu-ubuntu-2404
@@ -124,7 +130,7 @@ jobs:
           # is somebody else's and must not be deleted by a test build.
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isPrerelease -q .isPrerelease 2>/dev/null | grep -q true; then
             echo "Replacing the existing pre-release $TAG"
-            gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag
+            gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
           fi
 
           cat > notes.md <<'EOF'
