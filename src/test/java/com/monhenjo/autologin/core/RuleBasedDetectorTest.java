@@ -135,6 +135,36 @@ class RuleBasedDetectorTest {
 	}
 
 	@Test
+	void aliasCommandWithNoProseIsStillARegisterPrompt() {
+		LoginPrompt prompt = detect("/reg <password> <password>");
+		assertEquals(LoginKind.REGISTER, prompt.kind());
+		assertEquals("reg", prompt.verb(), "the mod must use the alias the server printed");
+		assertEquals(2, prompt.passwordArguments());
+	}
+
+	@Test
+	void aliasCommandBehindAPluginPrefix() {
+		LoginPrompt prompt = detect("[AuthMe] /reg <password> <password>");
+		assertEquals(LoginKind.REGISTER, prompt.kind());
+		assertEquals("reg", prompt.verb());
+	}
+
+	@Test
+	void aliasInTheProseIsUsedForBothDirections() {
+		// Servers rewrite the usage line to whatever alias they like; the verb is copied from it so
+		// the command the plugin actually parses is the one sent.
+		assertEquals("reg", detect("Please register with the command: /reg <password> <password>").verb());
+		assertEquals("l", detect("Please login with the command: /l <password>").verb());
+		assertEquals("signup", detect("/signup <password> <password>").verb());
+	}
+
+	@Test
+	void aliasKeepsTheArityOfTheAliasedCommand() {
+		assertEquals(2, detect("/reg <password> <password>").passwordArguments());
+		assertEquals(1, detect("Please register with the command: /reg <password>").passwordArguments());
+	}
+
+	@Test
 	void chatBroadcastWithASenderPrefix() {
 		// Captured from a real integrated server: /say arrives as player chat, decorated with the
 		// sender's display name.
