@@ -18,6 +18,7 @@ import static net.minecraft.commands.Commands.literal;
 public final class TestLoginCommand implements ModInitializer {
 	private static volatile String lastPassword = "";
 	private static volatile int logins;
+	private static volatile int registrations;
 
 	public static String lastPassword() {
 		return lastPassword;
@@ -25,6 +26,10 @@ public final class TestLoginCommand implements ModInitializer {
 
 	public static int logins() {
 		return logins;
+	}
+
+	public static int registrations() {
+		return registrations;
 	}
 
 	@Override
@@ -41,5 +46,21 @@ public final class TestLoginCommand implements ModInitializer {
 
 						return 1;
 					}))));
+
+		// A registration that behaves like AuthMe: two arguments, and the success wording the mod
+		// treats as "authenticated".
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
+			dispatcher.register(literal("register")
+				.then(argument("password", StringArgumentType.string())
+					.then(argument("confirm", StringArgumentType.string())
+						.executes(context -> {
+							lastPassword = StringArgumentType.getString(context, "password");
+							registrations++;
+
+							context.getSource().getPlayerOrException()
+								.sendSystemMessage(Component.literal("Successfully registered!"));
+
+							return 1;
+						})))));
 	}
 }

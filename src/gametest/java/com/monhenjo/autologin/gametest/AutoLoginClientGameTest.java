@@ -86,6 +86,37 @@ public class AutoLoginClientGameTest implements FabricClientGameTest {
 			check("hunter2".equals(TestLoginCommand.lastPassword()), "the label must resolve to the saved password");
 
 			context.takeScreenshot("autologin-alias");
+
+			// 4. a registration typed by hand is saved once the server confirms it
+			context.runOnClient(client -> {
+				AutoLoginClient.runtime().store().all()
+					.forEach(account -> AutoLoginClient.runtime().store().remove(account.id()));
+				AutoLoginClient.runtime().flow().onDisconnected();
+				Configs.get().autoLogin = false;
+			});
+
+			singleplayer.getServer().runCommand("say Please register with the command: /register <password> <ConfirmPassword>");
+			context.waitTicks(20);
+
+			context.runOnClient(client -> {
+				if (client.getConnection() != null) {
+					client.getConnection().sendCommand("register hunter2 hunter2");
+				}
+			});
+			context.waitTicks(30);
+
+			check(TestLoginCommand.registrations() == 1, "the test server should have seen the registration");
+			int saved = context.computeOnClient(client -> AutoLoginClient.runtime().store().all().size());
+			check(saved == 1, "the registration password should have been saved, got " + saved);
+			check("hunter2".equals(context.computeOnClient(client ->
+					AutoLoginClient.runtime().store().all().get(0).password())),
+				"the saved password must be the one that was registered");
+			context.takeScreenshot("autologin-saved");
+
+			// 5. the Cloth screen, with its tabs
+			context.runOnClient(client -> AutoLoginClient.runtime().openConfig());
+			context.waitTicks(15);
+			context.takeScreenshot("autologin-config");
 		}
 	}
 

@@ -14,6 +14,7 @@ import com.monhenjo.autologin.core.LoginKind;
 import com.monhenjo.autologin.core.LoginPrompt;
 import com.monhenjo.autologin.core.LoginVerbs;
 import com.monhenjo.autologin.core.PromptRules;
+import com.monhenjo.autologin.core.RegisterCapture;
 import com.monhenjo.autologin.core.RuleBasedDetector;
 import com.monhenjo.autologin.core.ServerKey;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -34,6 +35,7 @@ import java.util.Optional;
 public final class AutoLoginRuntime {
 	private final AccountStore store;
 	private final LoginFlow flow = new LoginFlow();
+	private final RegisterCapture registerCapture = new RegisterCapture();
 
 	private LoginDetector detector = new RuleBasedDetector();
 	private List<String> detectorRules = List.of();
@@ -107,8 +109,16 @@ public final class AutoLoginRuntime {
 
 		if (prompt.kind() == LoginKind.AUTHENTICATED) {
 			if (flow.awaitingCredentials()) {
+				boolean wasRegistering = flow.activePrompt()
+					.map(active -> active.kind() == LoginKind.REGISTER)
+					.orElse(false);
+
 				debug("authenticated (" + prompt.ruleId() + ")");
 				flow.onAuthenticated();
+
+				if (wasRegistering) {
+					saveCapturedRegistration();
+				}
 			}
 
 			return;
@@ -268,6 +278,49 @@ public final class AutoLoginRuntime {
 
 		debug("forwarded /" + verb + " <hidden>");
 		return true;
+	}
+
+	/**
+	 * Every command the client sends. A registration typed by hand is remembered here so the
+	 * password can be saved once the server confirms it.
+	 */
+	public void onOutgoingCommand(String commandLine) {
+		if (registerCapture.onCommand(serverKey, commandLine, System.currentTimeMillis())) {
+			debug("saw a registration command, will save the password if the server confirms");
+		}
+	}
+
+	/**
+	 * The server said the registration worked: keep the password that produced it, so the next
+	 * visit logs in without the player typing anything.
+	 */
+	private void saveCapturedRegistration() {
+		Optional<RegisterCapture.Captured> captured =
+			registerCapture.consumeIfRecent(System.currentTimeMillis());
+
+		if (captured.isEmpty()) {
+			return;
+		}
+
+		String password = captured.get().password();
+		String key = captured.get().serverKey().isEmpty() ? serverKey : captured.get().serverKey();
+
+		for (Account existing : store.forServer(key)) {
+			if (existing.password().equals(password)) {
+				debug("that password is already saved as " + existing.displayName());
+				return;
+			}
+		}
+
+		String label = RegisterCapture.labelFor(ClientCompat.playerName(), store.all());
+
+		try {
+			store.add(label, password, key);
+			chat(Component.translatable("autologin.chat.saved", label));
+			debug("saved the registration password as " + label + " for " + ServerKey.display(key));
+		} catch (IllegalArgumentException e) {
+			AutoLogin.LOGGER.warn("autologin: could not save the registration password: {}", e.getMessage());
+		}
 	}
 
 	public Account addAccount(String label, String password, String server) {
