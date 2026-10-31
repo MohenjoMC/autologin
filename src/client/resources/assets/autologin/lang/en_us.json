@@ -1,10 +1,10 @@
 {
 	"key.autologin.config": "AutoLogin: open settings",
 	"key.category.autologin.main": "AutoLogin",
-	"autologin.chat.no-accounts": "no login saved",
-	"autologin.chat.configure": "[+] settings",
+	"autologin.chat.no-accounts": "no login yet",
+	"autologin.chat.configure": "settings",
 	"autologin.chat.configure.tip": "open settings and saved logins",
-	"autologin.chat.later": "[x] later",
+	"autologin.chat.later": "later",
 	"autologin.chat.later.tip": "ignore this prompt",
 	"autologin.chat.use.tip": "send %s to %s",
 	"autologin.chat.retry": "the password did not work, try another",
