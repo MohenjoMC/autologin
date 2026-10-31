@@ -7,6 +7,7 @@ import net.minecraft.network.protocol.game.ClientboundPlayerChatPacket;
 import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundCommandsPacket;
 import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -57,6 +58,11 @@ public class ClientPacketListenerMixin {
 	@Inject(method = "setTitleText", at = @At("HEAD"))
 	private void autologin$onTitleText(ClientboundSetTitleTextPacket packet, CallbackInfo ci) {
 		AutoLoginClient.onServerText(packet.text().getString());
+	}
+
+	@Inject(method = "handleCommands", at = @At("TAIL"))
+	private void autologin$onCommands(ClientboundCommandsPacket packet, CallbackInfo ci) {
+		AutoLoginClient.onCommands(((ClientPacketListener) (Object) this).getCommands());
 	}
 
 	@Inject(method = "setSubtitleText", at = @At("HEAD"))

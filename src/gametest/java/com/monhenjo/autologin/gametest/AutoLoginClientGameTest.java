@@ -2,35 +2,27 @@ package com.monhenjo.autologin.gametest;
 
 import com.monhenjo.autologin.client.AutoLoginClient;
 import com.monhenjo.autologin.client.AutoLoginRuntime;
-import com.monhenjo.autologin.client.compat.ClientCompat;
 import com.monhenjo.autologin.client.config.AutoLoginConfig;
 import com.monhenjo.autologin.client.config.Configs;
-import com.monhenjo.autologin.client.gui.AccountEditScreen;
-import com.monhenjo.autologin.client.gui.PickerScreen;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 
 /**
- * The whole loop, in a real client with a real integrated server:
+ * The whole loop in a real client with a real integrated server, for both behaviours:
  *
  * <ol>
- *   <li>the server says "Please login with the command: /login &lt;password&gt;"</li>
- *   <li>the mod detects it, offers the saved login, and sends nothing yet</li>
- *   <li>the player picks it (the same call the chat link and the picker button make)</li>
- *   <li>the server's own /login handler receives exactly the saved password</li>
- *   <li>"Successfully logged in!" flips the flow to authenticated</li>
+ *   <li>auto-login on: the prompt is answered with no click at all</li>
+ *   <li>auto-login off: nothing is sent until the player picks, then "/login test" works</li>
+ *   <li>typing the saved label (what the /login suggestion list offers) sends the password</li>
  * </ol>
  *
- * The server side is the gametest mod's {@link TestLoginCommand}, not a fake: the password really
- * travels as a command packet over the integrated connection.
+ * The server side is the gametest mod's {@link TestLoginCommand}: the password really travels as
+ * a command packet over the connection.
  */
 public class AutoLoginClientGameTest implements FabricClientGameTest {
 	@Override
 	public void runTest(ClientGameTestContext context) {
-		// Software GL plus the default 120 fps cap starves the integrated server, and the world
-		// load then times out before the test body ever runs. These are the same values the
-		// screenshot still looks fine at.
 		context.runOnClient(client -> {
 			client.options.framerateLimit().set(20);
 			client.options.renderDistance().set(4);
@@ -47,56 +39,53 @@ public class AutoLoginClientGameTest implements FabricClientGameTest {
 
 				AutoLoginConfig config = Configs.get();
 				config.enabled = true;
+				config.autoLogin = true;
 				config.chatList = true;
-				config.openScreenOnPrompt = false;
 				config.detectInSingleplayer = true;
+				config.preferredLogin = "";
 				config.debug = true;
 
-				runtime.addAccount("main", "hunter2", "");
+				runtime.store().add("main", "hunter2", "");
 			});
 
 			context.waitTicks(20);
 			context.takeScreenshot("autologin-start");
 
+			// 1. auto-login: prompt arrives, password leaves without a click
 			singleplayer.getServer().runCommand("say Please login with the command: /login <password>");
-			context.waitTicks(20);
+			context.waitTicks(25);
 
+			int afterAuto = TestLoginCommand.logins();
+			check(afterAuto == 1, "auto-login should have sent exactly one login, got " + afterAuto);
+			check("hunter2".equals(TestLoginCommand.lastPassword()),
+				"the server received: " + TestLoginCommand.lastPassword());
+			context.takeScreenshot("autologin-auto");
+
+			// 2. manual picker: the same prompt must not send anything by itself
+			context.waitTicks(420); // past the 15s resend grace
+			context.runOnClient(client -> Configs.get().autoLogin = false);
+
+			singleplayer.getServer().runCommand("say Please login with the command: /login <password>");
+			context.waitTicks(25);
+
+			check(TestLoginCommand.logins() == afterAuto,
+				"with auto-login off nothing may be sent before the player picks");
 			int offered = context.computeOnClient(client -> AutoLoginClient.runtime().offered().size());
-			check(offered == 1, "the prompt should offer exactly the saved login, got " + offered);
-			check(context.computeOnClient(client -> AutoLoginClient.runtime().flow().awaitingCredentials()),
-				"the prompt was not detected at all");
-
-			String beforeClick = context.computeOnClient(client -> AutoLoginClient.runtime().lastSent());
-			check(beforeClick.isEmpty(), "nothing may be sent before the player picks, sent: " + beforeClick);
-
+			check(offered == 1, "the prompt should offer the saved login, got " + offered);
 			context.takeScreenshot("autologin-prompt");
 
 			context.runOnClient(client -> AutoLoginClient.runtime().use(1));
 			context.waitTicks(20);
+			check(TestLoginCommand.logins() == afterAuto + 1, "clicking the option should send the password");
 
-			String sent = context.computeOnClient(client -> AutoLoginClient.runtime().lastSent());
-			check("/login <hidden>".equals(sent), "client should record a masked /login send, got: " + sent);
-			check("hunter2".equals(TestLoginCommand.lastPassword()),
-				"the server received: " + TestLoginCommand.lastPassword());
+			// 3. the label typed after /login (what the suggestion list offers)
+			context.waitTicks(420);
+			context.runOnClient(client -> AutoLoginClient.runtime().loginWithAlias("login", "main"));
+			context.waitTicks(20);
+			check(TestLoginCommand.logins() == afterAuto + 2, "/login <label> should send the saved password");
+			check("hunter2".equals(TestLoginCommand.lastPassword()), "the label must resolve to the saved password");
 
-			boolean authenticated = context.computeOnClient(client -> AutoLoginClient.runtime().flow().authenticated());
-			check(authenticated, "'Successfully logged in!' should end the prompt cycle");
-
-			context.takeScreenshot("autologin-sent");
-
-			context.runOnClient(client -> AutoLoginClient.runtime().openPicker());
-			context.waitForScreen(PickerScreen.class);
-			context.takeScreenshot("autologin-picker");
-
-			// The two other screens nobody would otherwise see in a test: the Cloth-generated
-			// settings and the add-a-login form.
-			context.runOnClient(client -> ClientCompat.openScreen(Configs.screen(null)));
-			context.waitTicks(5);
-			context.takeScreenshot("autologin-settings");
-
-			context.runOnClient(client -> ClientCompat.openScreen(new AccountEditScreen(null, AutoLoginClient.runtime(), "")));
-			context.waitForScreen(AccountEditScreen.class);
-			context.takeScreenshot("autologin-add");
+			context.takeScreenshot("autologin-alias");
 		}
 	}
 

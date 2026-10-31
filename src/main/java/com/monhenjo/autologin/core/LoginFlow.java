@@ -29,6 +29,13 @@ public final class LoginFlow {
 	/** After this long without another prompt, the next one counts as a fresh attempt. */
 	private static final long ATTEMPT_DECAY_MILLIS = 60_000L;
 
+	/**
+	 * After a password has been sent, ignore the plugin's repeated prompts for this long. AuthMe
+	 * re-sends its prompt every 5 seconds while it waits, and with auto-login on that would mean
+	 * re-sending the password every 5 seconds.
+	 */
+	private static final long RESEND_GRACE_MILLIS = 15_000L;
+
 	private final long dedupeMillis;
 
 	private LoginPrompt active;
@@ -51,6 +58,10 @@ public final class LoginFlow {
 	 */
 	public Optional<Decision> onPrompt(LoginPrompt prompt, List<Account> options, long now) {
 		if (prompt == null || !prompt.needsCredentials() || authenticated) {
+			return Optional.empty();
+		}
+
+		if (lastSentAt != Long.MIN_VALUE && now - lastSentAt < RESEND_GRACE_MILLIS) {
 			return Optional.empty();
 		}
 
@@ -88,6 +99,7 @@ public final class LoginFlow {
 	public void onDismissed() {
 		active = null;
 		lastPromptAt = Long.MIN_VALUE;
+		lastSentAt = Long.MIN_VALUE;
 		attempts = 0;
 	}
 

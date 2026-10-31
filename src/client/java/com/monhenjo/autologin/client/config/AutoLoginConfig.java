@@ -8,10 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Everything the player can change, rendered by Cloth Config.
+ * Everything, in one Cloth Config screen: behaviour, saved logins, custom rules.
  *
- * <p>Saved logins are deliberately not here: they live in the encrypted vault, not in the plain
- * JSON that Cloth writes, and they are managed from the picker instead.
+ * <p>Saved logins are rows of {@code label|server|password} - the list in the screen is the
+ * database, so there is no second store to drift out of sync and no custom GUI to maintain.
+ * The cost is that the config file holds passwords in plain text; the file is written
+ * owner-only and the screen's tooltip says so.
  */
 @Config(name = "autologin")
 public class AutoLoginConfig implements ConfigData {
@@ -19,10 +21,16 @@ public class AutoLoginConfig implements ConfigData {
 	public boolean enabled = true;
 
 	@ConfigEntry.Gui.Tooltip
-	public boolean chatList = true;
+	public boolean autoLogin = true;
 
 	@ConfigEntry.Gui.Tooltip
-	public boolean openScreenOnPrompt = false;
+	public String preferredLogin = "";
+
+	@ConfigEntry.Gui.Tooltip
+	public List<String> accounts = new ArrayList<>();
+
+	@ConfigEntry.Gui.Tooltip
+	public boolean chatList = true;
 
 	@ConfigEntry.Gui.Tooltip
 	public boolean detectInSingleplayer = false;
@@ -35,10 +43,19 @@ public class AutoLoginConfig implements ConfigData {
 
 	@Override
 	public void validatePostLoad() throws ValidationException {
+		if (accounts == null) {
+			accounts = new ArrayList<>();
+		}
+
 		if (customRules == null) {
 			customRules = new ArrayList<>();
 		}
 
+		if (preferredLogin == null) {
+			preferredLogin = "";
+		}
+
+		accounts.removeIf(row -> row == null || row.isBlank());
 		customRules.removeIf(rule -> rule == null || rule.isBlank());
 	}
 }

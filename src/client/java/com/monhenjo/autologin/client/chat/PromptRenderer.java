@@ -4,6 +4,7 @@ import com.monhenjo.autologin.client.AutoLoginRuntime;
 import com.monhenjo.autologin.client.compat.ClientCompat;
 import com.monhenjo.autologin.core.Account;
 import com.monhenjo.autologin.core.LoginFlow;
+import com.monhenjo.autologin.core.LoginKind;
 import com.monhenjo.autologin.core.ServerKey;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.ClickEvent;
@@ -12,19 +13,15 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 
 /**
- * The in-chat picker: numbered, clickable options, the same shape as command suggestions.
- *
- * <p>Clicking a line runs a <em>client</em> command ({@code /autologin use 1}) which Fabric
- * intercepts locally. The password is only ever placed on the network by
- * {@link AutoLoginRuntime#send}, never into the chat box, so it cannot end up in chat history or
- * in a screenshot of the input line.
+ * The fallback picker in chat: numbered, clickable options, shown only when auto-login is off or
+ * could not decide. With auto-login on this never appears - that is the point of the setting.
  */
 public final class PromptRenderer {
 	private PromptRenderer() {
 	}
 
 	public static void show(AutoLoginRuntime runtime, LoginFlow.Decision decision, String serverKey) {
-		String headerKey = decision.prompt().kind() == com.monhenjo.autologin.core.LoginKind.REGISTER
+		String headerKey = decision.prompt().kind() == LoginKind.REGISTER
 			? "autologin.chat.header.register"
 			: "autologin.chat.header";
 
@@ -32,11 +29,11 @@ public final class PromptRenderer {
 			.withStyle(ChatFormatting.GOLD));
 
 		if (decision.options().isEmpty()) {
-			MutableComponent empty = Component.translatable("autologin.chat.no-accounts").withStyle(ChatFormatting.GRAY);
-			empty.append(Component.literal("  "));
-			empty.append(option(Component.translatable("autologin.chat.add"), "/autologin add",
-				ChatFormatting.GREEN, "autologin.chat.add.tip"));
-			ClientCompat.chat(empty);
+			ClientCompat.chat(Component.translatable("autologin.chat.no-accounts")
+				.withStyle(ChatFormatting.GRAY)
+				.append(Component.literal("  "))
+				.append(option(Component.translatable("autologin.chat.configure"), "/autologin config",
+					ChatFormatting.GREEN, "autologin.chat.configure.tip")));
 			return;
 		}
 
@@ -51,8 +48,8 @@ public final class PromptRenderer {
 			index++;
 		}
 
-		row.append(option(Component.translatable("autologin.chat.add"), "/autologin add",
-			ChatFormatting.GREEN, "autologin.chat.add.tip"));
+		row.append(option(Component.translatable("autologin.chat.configure"), "/autologin config",
+			ChatFormatting.GREEN, "autologin.chat.configure.tip"));
 		row.append(Component.literal("  "));
 		row.append(option(Component.translatable("autologin.chat.later"), "/autologin dismiss",
 			ChatFormatting.DARK_GRAY, "autologin.chat.later.tip"));
