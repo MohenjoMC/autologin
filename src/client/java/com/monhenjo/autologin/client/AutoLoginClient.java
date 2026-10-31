@@ -59,6 +59,14 @@ public class AutoLoginClient implements ClientModInitializer {
 		AliasSuggestions.attach(dispatcher, () -> current.suggestLabels(""));
 	}
 
+	/** Called from the packet mixin for every command the client sends. */
+	public static void onOutgoingCommand(String commandLine) {
+		AutoLoginRuntime current = runtime;
+		if (current != null) {
+			current.onOutgoingCommand(commandLine);
+		}
+	}
+
 	/** Called from the packet mixin for every server message; may arrive on the netty thread. */
 	public static void onServerText(String text) {
 		AutoLoginRuntime current = runtime;

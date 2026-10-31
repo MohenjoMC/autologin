@@ -122,6 +122,11 @@ public final class LoginVerbs {
 		return line.toString();
 	}
 
+	/** Register-side verbs: the only ones whose password is worth remembering. */
+	public static boolean isRegisterVerb(String verb) {
+		return verb != null && registrationVerb(verb);
+	}
+
 	private static boolean registrationVerb(String verb) {
 		String lower = verb.toLowerCase(Locale.ROOT);
 		return lower.startsWith("reg") || lower.startsWith("sign");

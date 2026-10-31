@@ -1,7 +1,6 @@
 {
 	"key.autologin.config": "AutoLogin: open settings",
 	"key.category.autologin.main": "AutoLogin",
-
 	"autologin.chat.header": "AutoLogin: %s wants you to log in",
 	"autologin.chat.header.register": "AutoLogin: %s wants you to register",
 	"autologin.chat.no-accounts": "No saved login for this server yet.",
@@ -23,7 +22,6 @@
 	"autologin.chat.remove.not-found": "AutoLogin: no login called \"%s\".",
 	"autologin.chat.on": "AutoLogin: enabled.",
 	"autologin.chat.off": "AutoLogin: disabled.",
-
 	"text.autoconfig.autologin.title": "AutoLogin settings",
 	"text.autoconfig.autologin.option.enabled": "Enabled",
 	"text.autoconfig.autologin.option.enabled.@Tooltip": "Watch server messages for login prompts.",
@@ -32,7 +30,7 @@
 	"text.autoconfig.autologin.option.preferredLogin": "Preferred login",
 	"text.autoconfig.autologin.option.preferredLogin.@Tooltip": "Label to use when several logins match. Empty means the first matching row.",
 	"text.autoconfig.autologin.option.accounts": "Saved logins",
-	"text.autoconfig.autologin.option.accounts.@Tooltip": "One per row: label|server|password. Server may be * for every server. Stored in plain text in this file.",
+	"text.autoconfig.autologin.option.accounts.@Tooltip": "One per row: label|server|password. server may be * for every server. A password typed into /register is saved here automatically.",
 	"text.autoconfig.autologin.option.chatList": "Chat fallback",
 	"text.autoconfig.autologin.option.chatList.@Tooltip": "When auto-login cannot decide, print clickable options in chat.",
 	"text.autoconfig.autologin.option.detectInSingleplayer": "Detect in singleplayer",
@@ -40,5 +38,9 @@
 	"text.autoconfig.autologin.option.debug": "Debug logging",
 	"text.autoconfig.autologin.option.debug.@Tooltip": "Log every rule that fires, and why a prompt was skipped.",
 	"text.autoconfig.autologin.option.customRules": "Custom rules",
-	"text.autoconfig.autologin.option.customRules.@Tooltip": "One per line: KIND regex. KIND is LOGIN, REGISTER or AUTHENTICATED. Example: LOGIN ^Please /login <password>"
+	"text.autoconfig.autologin.option.customRules.@Tooltip": "One per line: KIND regex. KIND is LOGIN, REGISTER or AUTHENTICATED. Example: LOGIN ^Please /login <password>",
+	"autologin.chat.saved": "AutoLogin: saved this server's password as %s.",
+	"text.autoconfig.autologin.category.general": "General",
+	"text.autoconfig.autologin.category.logins": "Saved logins",
+	"text.autoconfig.autologin.category.rules": "Detection rules"
 }

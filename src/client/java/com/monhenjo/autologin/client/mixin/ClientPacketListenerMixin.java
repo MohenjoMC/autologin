@@ -60,6 +60,11 @@ public class ClientPacketListenerMixin {
 		AutoLoginClient.onServerText(packet.text().getString());
 	}
 
+	@Inject(method = "sendCommand", at = @At("HEAD"))
+	private void autologin$onSendCommand(String command, CallbackInfo ci) {
+		AutoLoginClient.onOutgoingCommand(command);
+	}
+
 	@Inject(method = "handleCommands", at = @At("TAIL"))
 	private void autologin$onCommands(ClientboundCommandsPacket packet, CallbackInfo ci) {
 		AutoLoginClient.onCommands(((ClientPacketListener) (Object) this).getCommands());
