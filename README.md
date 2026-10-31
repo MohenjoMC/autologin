@@ -17,7 +17,9 @@ anywhere except the one command you choose.
    phrases authentication plugins actually print (AuthMe, nLogin, LibreLogin,
    LoginSecurity, FastLogin, the generic "Please login with /login <password>"
    family), plus any regex you add yourself.
-2. **Offers** the saved logins for that server. In chat:
+2. **Logs you in.** With `Log in automatically` on (the default) the password is sent the
+   moment the prompt is seen - no menu, no click. With it off, the saved logins are offered in
+   chat:
 
    ```
    AutoLogin: mc.example.com wants you to log in
@@ -26,19 +28,22 @@ anywhere except the one command you choose.
 
    Every option is clickable, like command suggestions. `F9` or `/autologin`
    opens the same list as a screen.
-3. **Sends** only after you click. The mod never sends a password on its own.
-4. **Notices** when the server says "Successfully logged in!" and stops asking.
+   and typing `/login` shows the saved labels in the command suggestions; `/login test` sends
+   the password saved as `test`, while `/login hunter2` is forwarded to the server untouched.
+
+3. **Notices** when the server says "Successfully logged in!" and stops asking.
+
+Settings and saved logins live in one **Cloth Config** screen (`F9`, `/autologin`, or Mod Menu):
+behaviour at the top, then `Saved logins` as `label|server|password` rows.
 
 ## Security model
 
 This is worth reading once, because the mod holds passwords.
 
-- **Passwords are encrypted at rest.** `config/autologin/accounts.vault` is
-  AES-256-GCM sealed with a key derived (PBKDF2-HMAC-SHA256, 210k rounds) from
-  a machine fingerprint and a random salt in `config/autologin/vault.salt`.
-  The file is `chmod 600` where the OS supports it. Copy the config folder to
-  another machine and the passwords will not decrypt - they will be reported as
-  unreadable rather than silently replaced, and you re-enter them.
+- **Passwords are stored in `config/autologin.json`**, in the `Saved logins` rows, in plain
+  text - that is the price of editing them in the Cloth screen. Treat that file like a
+  password file: it is created owner-readable where the filesystem supports it. Vaults from
+  builds before 1.0.0-test.5 are imported once on first start and left untouched.
 - **The key is on your machine, so this is not protection from someone using
   your computer.** It protects a synced config folder, a backup, or someone
   reading the file: none of them get the password from the bytes.
@@ -61,8 +66,8 @@ This is worth reading once, because the mod holds passwords.
 
 | Action | How |
 |---|---|
-| Pick a saved login | Click a chat option, press `F9`, or run `/autologin` |
-| Add a login | `[+] add login` in the prompt, `/autologin add`, or the picker screen |
+| Add or edit a login | `F9`, `/autologin`, or Mod Menu → `Saved logins` |
+| Use a saved login | `/login <label>`, or click a chat option when auto-login is off |
 | List saved logins | `/autologin list` |
 | Remove one | `/autologin remove <label>` |
 | Settings | `/autologin config`, or Mod Menu |
