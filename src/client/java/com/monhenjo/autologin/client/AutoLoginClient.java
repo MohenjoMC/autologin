@@ -1,14 +1,19 @@
 package com.monhenjo.autologin.client;
 
 import com.monhenjo.autologin.AutoLogin;
+import com.monhenjo.autologin.client.command.AliasSuggestions;
 import com.monhenjo.autologin.client.command.AutoLoginCommand;
+import com.monhenjo.autologin.client.command.LoginAliasCommands;
 import com.monhenjo.autologin.client.compat.ClientCompat;
+import com.monhenjo.autologin.client.config.AutoLoginConfig;
+import com.monhenjo.autologin.client.config.ConfigAccountStore;
 import com.monhenjo.autologin.client.config.Configs;
+import com.monhenjo.autologin.client.config.LegacyImport;
 import com.monhenjo.autologin.client.keys.AutoLoginKeys;
-import com.monhenjo.autologin.storage.VaultAccountStore;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.client.Minecraft;
 
 public class AutoLoginClient implements ClientModInitializer {
@@ -18,14 +23,15 @@ public class AutoLoginClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		Configs.init();
 
-		VaultAccountStore store = VaultAccountStore.open(
+		AutoLoginConfig config = Configs.get();
+		ConfigAccountStore store = new ConfigAccountStore(config);
+		LegacyImport.importInto(config, store,
 			FabricLoader.getInstance().getConfigDir().resolve(AutoLogin.MOD_ID));
-
-		store.problem().ifPresent(problem -> AutoLogin.LOGGER.warn("autologin: {}", problem));
 
 		runtime = new AutoLoginRuntime(store);
 
 		AutoLoginCommand.register(runtime);
+		LoginAliasCommands.register(runtime);
 		AutoLoginKeys.register();
 
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) ->
@@ -37,6 +43,20 @@ public class AutoLoginClient implements ClientModInitializer {
 
 	public static AutoLoginRuntime runtime() {
 		return runtime;
+	}
+
+	/**
+	 * The server's command tree just arrived (or was refreshed). Saved labels are added to the
+	 * login commands' argument node here, because that tree - not ours - is what the chat
+	 * suggestion popup reads.
+	 */
+	public static void onCommands(CommandDispatcher<?> dispatcher) {
+		AutoLoginRuntime current = runtime;
+		if (current == null || dispatcher == null) {
+			return;
+		}
+
+		AliasSuggestions.attach(dispatcher, () -> current.suggestLabels(""));
 	}
 
 	/** Called from the packet mixin for every server message; may arrive on the netty thread. */
@@ -51,7 +71,7 @@ public class AutoLoginClient implements ClientModInitializer {
 			current.onServerText(text);
 		} else {
 			// handleSystemChat is hit once on the netty thread and again on the client thread.
-			// Chat rendering and config access belong to the client thread; the flow dedupes the
+			// Chat output and config access belong to the client thread; the flow dedupes the
 			// resulting duplicate.
 			client.execute(() -> current.onServerText(text));
 		}

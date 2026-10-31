@@ -18,11 +18,8 @@ import net.minecraft.network.chat.Component;
  * {@code /autologin ...}, registered client-side, so it never reaches the server and never shows
  * up in the server's logs.
  *
- * <p>Note what is <em>not</em> here: there is no {@code /autologin add <password>}. A password
- * typed into chat is a password in chat history, so adding always goes through the screen.
- *
- * <p>The tree is built with Brigadier's own builders rather than Fabric's one-per-version sugar
- * helpers, so this file is identical on every supported Minecraft line.
+ * <p>There is deliberately no {@code /autologin add <password>}: a password typed into chat is a
+ * password in chat history. Logins are added in the Cloth Config screen.
  */
 public final class AutoLoginCommand {
 	private AutoLoginCommand() {
@@ -36,9 +33,14 @@ public final class AutoLoginCommand {
 	private static LiteralArgumentBuilder<FabricClientCommandSource> tree(AutoLoginRuntime runtime) {
 		return LiteralArgumentBuilder.<FabricClientCommandSource>literal("autologin")
 			.executes(context -> {
-				runtime.openPicker();
+				runtime.openConfig();
 				return 1;
 			})
+			.then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("config")
+				.executes(context -> {
+					runtime.openConfig();
+					return 1;
+				}))
 			.then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("use")
 				.then(RequiredArgumentBuilder.<FabricClientCommandSource, Integer>argument(
 						"index", IntegerArgumentType.integer(1))
@@ -46,11 +48,6 @@ public final class AutoLoginCommand {
 						runtime.use(IntegerArgumentType.getInteger(context, "index"));
 						return 1;
 					})))
-			.then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("add")
-				.executes(context -> {
-					runtime.openAdd();
-					return 1;
-				}))
 			.then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("list")
 				.executes(context -> {
 					list(runtime);
@@ -63,11 +60,6 @@ public final class AutoLoginCommand {
 						remove(runtime, StringArgumentType.getString(context, "label"));
 						return 1;
 					})))
-			.then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("config")
-				.executes(context -> {
-					ClientCompat.openScreen(Configs.screen(null));
-					return 1;
-				}))
 			.then(LiteralArgumentBuilder.<FabricClientCommandSource>literal("dismiss")
 				.executes(context -> {
 					runtime.dismiss();
@@ -108,9 +100,6 @@ public final class AutoLoginCommand {
 			ClientCompat.chat(Component.literal(" - " + account.displayName() + " @ "
 				+ ServerKey.display(account.serverKey())).withStyle(ChatFormatting.GRAY));
 		}
-
-		runtime.store().problem().ifPresent(problem ->
-			ClientCompat.chat(Component.literal(" ! " + problem).withStyle(ChatFormatting.RED)));
 	}
 
 	private static void remove(AutoLoginRuntime runtime, String label) {
