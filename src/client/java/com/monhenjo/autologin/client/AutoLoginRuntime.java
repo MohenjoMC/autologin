@@ -1,6 +1,7 @@
 package com.monhenjo.autologin.client;
 
 import com.monhenjo.autologin.AutoLogin;
+import com.monhenjo.autologin.client.chat.ChatTheme;
 import com.monhenjo.autologin.client.chat.PromptRenderer;
 import com.monhenjo.autologin.client.compat.ClientCompat;
 import com.monhenjo.autologin.client.config.AutoLoginConfig;
@@ -251,7 +252,7 @@ public final class AutoLoginRuntime {
 		lastSent = LoginVerbs.describeCommand(command);
 		debug("sent " + lastSent + " for " + account.displayName());
 
-		chat(Component.translatable("autologin.chat.sent", account.displayName(), ServerKey.display(serverKey)));
+		chat(ChatTheme.note(Component.translatable("autologin.chat.sent", account.displayName())));
 		return true;
 	}
 
@@ -267,6 +268,10 @@ public final class AutoLoginRuntime {
 		}
 
 		String line = typed.isBlank() ? verb : verb + " " + typed;
+
+		// A registration typed in chat never reaches sendCommand: our own /register client command
+		// catches it and forwards it here, so this is the only place it can be remembered.
+		onOutgoingCommand(line);
 
 		try {
 			connection.send(new ServerboundChatCommandPacket(line));
@@ -316,7 +321,8 @@ public final class AutoLoginRuntime {
 
 		try {
 			store.add(label, password, key);
-			chat(Component.translatable("autologin.chat.saved", label));
+			chat(ChatTheme.state(Component.translatable("autologin.chat.saved", label),
+				net.minecraft.ChatFormatting.GREEN));
 			debug("saved the registration password as " + label + " for " + ServerKey.display(key));
 		} catch (IllegalArgumentException e) {
 			AutoLogin.LOGGER.warn("autologin: could not save the registration password: {}", e.getMessage());
@@ -350,13 +356,13 @@ public final class AutoLoginRuntime {
 
 	private void list(List<Account> accounts) {
 		if (accounts.isEmpty()) {
-			chat(Component.translatable("autologin.chat.list.empty"));
+			chat(ChatTheme.note(Component.translatable("autologin.chat.list.empty")));
 			return;
 		}
 
 		for (Account account : accounts) {
-			chat(Component.translatable("autologin.chat.list.entry", account.displayName(),
-				ServerKey.display(account.serverKey())));
+			chat(ChatTheme.note(Component.translatable("autologin.chat.list.entry",
+				account.displayName(), ServerKey.display(account.serverKey()))));
 		}
 	}
 
@@ -369,7 +375,7 @@ public final class AutoLoginRuntime {
 	}
 
 	private void fail(String translationKey) {
-		chat(Component.translatable(translationKey).withStyle(net.minecraft.ChatFormatting.RED));
+		chat(ChatTheme.state(Component.translatable(translationKey), net.minecraft.ChatFormatting.RED));
 	}
 
 	private void syncRules(AutoLoginConfig config) {

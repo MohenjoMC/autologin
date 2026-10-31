@@ -22,8 +22,8 @@ anywhere except the one command you choose.
    chat:
 
    ```
-   AutoLogin: mc.example.com wants you to log in
-   [1] main  [2] alt  [+] add login  [x] later
+   AutoLogin  mc.example.com
+   [1] main   [2] alt   [+] settings   [x] later
    ```
 
    Every option is clickable, like command suggestions. `F9` or `/autologin`
