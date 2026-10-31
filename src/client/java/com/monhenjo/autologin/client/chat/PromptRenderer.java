@@ -28,7 +28,7 @@ public final class PromptRenderer {
 				.withStyle(ChatFormatting.DARK_GRAY)
 				.append(Component.literal("   "))
 				.append(ChatTheme.option("+", "settings", "/autologin config",
-					ChatFormatting.GREEN, Component.translatable("autologin.chat.configure.tip")));
+					ChatFormatting.BLUE, Component.translatable("autologin.chat.configure.tip")));
 
 			ClientCompat.chat(none);
 			return;
@@ -42,7 +42,7 @@ public final class PromptRenderer {
 				String.valueOf(index),
 				account.displayName(),
 				"/autologin use " + index,
-				ChatFormatting.DARK_AQUA,
+				ChatFormatting.BLUE,
 				Component.translatable("autologin.chat.use.tip", account.displayName(),
 					ServerKey.display(serverKey))
 			));
@@ -51,10 +51,10 @@ public final class PromptRenderer {
 		}
 
 		row.append(ChatTheme.option("+", "settings", "/autologin config",
-			ChatFormatting.GREEN, Component.translatable("autologin.chat.configure.tip")));
+			ChatFormatting.BLUE, Component.translatable("autologin.chat.configure.tip")));
 		row.append(Component.literal("   "));
 		row.append(ChatTheme.option("x", "later", "/autologin dismiss",
-			ChatFormatting.DARK_GRAY, Component.translatable("autologin.chat.later.tip")));
+			ChatFormatting.BLUE, Component.translatable("autologin.chat.later.tip")));
 
 		ClientCompat.chat(row);
 
