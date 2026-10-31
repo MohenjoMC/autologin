@@ -24,9 +24,11 @@ public final class ChatTheme {
 	private ChatTheme() {
 	}
 
-	/** {@code AutoLogin} in blue, then two spaces. */
+	/** {@code [autologin]} - dim brackets, lowercase name in blue, then two spaces. */
 	public static MutableComponent prefix() {
-		return Component.literal("AutoLogin").withStyle(ACCENT)
+		return Component.literal("[").withStyle(ChatFormatting.DARK_GRAY)
+			.append(Component.literal("autologin").withStyle(ACCENT))
+			.append(Component.literal("]").withStyle(ChatFormatting.DARK_GRAY))
 			.append(Component.literal(SEPARATOR));
 	}
 
