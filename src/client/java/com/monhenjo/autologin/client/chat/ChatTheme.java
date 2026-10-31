@@ -7,31 +7,29 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 
 /**
- * One place for how the mod talks in chat.
+ * How the mod talks in chat.
  *
- * <p>The shape is always the same: a gold {@code AutoLogin}, a dim separator, then one short
- * statement in grey. Actions are the only coloured words, so the eye lands on what can be clicked
- * rather than on the mod's name. No sentence repeats "AutoLogin" because the prefix already says
- * it.
+ * <p>Minecraft has no per-message font size, so "smaller" has to come from weight, colour and
+ * glyph count. Rules here: no bold, no gold, one dark grey label at the start of the line, and the
+ * only coloured words are the ones you can click. That keeps our lines quieter than the plugin's
+ * own coloured chat instead of competing with it.
+ *
+ * <p>Spacing is plain ASCII because the default font has no typographic punctuation; a middle dot
+ * renders as a gap.
  */
 public final class ChatTheme {
-	/**
-	 * Two plain spaces. The default Minecraft font only has ASCII, so typographic punctuation
-	 * (middle dot, em dash) renders as a gap or falls back to another typeface mid-line.
-	 */
 	private static final String SEPARATOR = "  ";
 
 	private ChatTheme() {
 	}
 
-	/** {@code AutoLogin} in gold, bold, followed by two spaces. */
+	/** {@code AutoLogin} in dark grey, two spaces. Reads as a label, not a headline. */
 	public static MutableComponent prefix() {
-		return Component.literal("AutoLogin").withStyle(ChatFormatting.GOLD)
-			.withStyle(style -> style.withBold(true))
+		return Component.literal("AutoLogin").withStyle(ChatFormatting.DARK_GRAY)
 			.append(Component.literal(SEPARATOR));
 	}
 
-	/** {@code AutoLogin  <server>} - what the player is looking at. */
+	/** {@code AutoLogin  <server>}. */
 	public static MutableComponent header(String server) {
 		return prefix().append(Component.literal(server).withStyle(ChatFormatting.WHITE));
 	}
@@ -45,7 +43,7 @@ public final class ChatTheme {
 		return note(Component.translatable(translationKey, args));
 	}
 
-	/** {@code AutoLogin  <statement>} in a colour that carries meaning (green, red). */
+	/** Same, in a colour that carries meaning. */
 	public static MutableComponent state(Component body, ChatFormatting colour) {
 		return prefix().append(body.copy().withStyle(colour));
 	}
@@ -55,15 +53,14 @@ public final class ChatTheme {
 	}
 
 	/**
-	 * A clickable token: dim brackets, a coloured key, a white label. Reads as one unit at a
-	 * glance and stays legible next to the plugin's own coloured text.
+	 * A clickable token without brackets: a coloured key, a space, a grey label. Brackets cost two
+	 * glyphs per option and read as heavier than the words inside them.
 	 */
 	public static MutableComponent option(String key, String label, String command,
 			ChatFormatting keyColour, Component tooltip) {
-		return Component.literal("[").withStyle(ChatFormatting.DARK_GRAY)
-			.append(Component.literal(key).withStyle(keyColour))
-			.append(Component.literal("] ").withStyle(ChatFormatting.DARK_GRAY))
-			.append(Component.literal(label).withStyle(ChatFormatting.WHITE))
+		return Component.literal(key).withStyle(keyColour)
+			.append(Component.literal(" "))
+			.append(Component.literal(label).withStyle(ChatFormatting.GRAY))
 			.withStyle(style -> style
 				.withClickEvent(new ClickEvent.RunCommand(command))
 				.withHoverEvent(new HoverEvent.ShowText(tooltip)));

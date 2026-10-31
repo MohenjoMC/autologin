@@ -25,7 +25,7 @@ public final class PromptRenderer {
 
 		if (decision.options().isEmpty()) {
 			MutableComponent none = Component.translatable("autologin.chat.no-accounts")
-				.withStyle(ChatFormatting.GRAY)
+				.withStyle(ChatFormatting.DARK_GRAY)
 				.append(Component.literal("   "))
 				.append(ChatTheme.option("+", "settings", "/autologin config",
 					ChatFormatting.GREEN, Component.translatable("autologin.chat.configure.tip")));
