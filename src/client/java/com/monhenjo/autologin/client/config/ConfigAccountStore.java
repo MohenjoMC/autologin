@@ -1,7 +1,6 @@
 package com.monhenjo.autologin.client.config;
 
 import com.monhenjo.autologin.core.Account;
-import com.monhenjo.autologin.core.AccountLine;
 import com.monhenjo.autologin.core.AccountStore;
 import com.monhenjo.autologin.core.LoginVerbs;
 import com.monhenjo.autologin.core.ServerKey;
@@ -15,17 +14,15 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Saved logins, stored as the {@code label|server|password} rows of the Cloth Config screen.
+ * Saved logins, stored as the entries of the Cloth Config screen.
  *
- * <p>The point of this class is that the config file *is* the database: what the player sees in
- * the list is what the mod uses, with no second store to drift out of sync. That also means the
- * passwords are only as safe as the config file - it is created owner-readable where the
- * filesystem supports it, and the screen says so out loud.
+ * <p>The screen's list *is* the database: what the player edits is what the mod uses. Entries are
+ * objects with a field per value, so nothing has to be parsed out of a packed string.
  */
 public final class ConfigAccountStore implements AccountStore {
 	private final AutoLoginConfig config;
 
-	/** Recency for ordering only; not worth a column in the file. */
+	/** Recency for ordering only; not worth a field in the file. */
 	private final Map<String, Long> lastUsed = new HashMap<>();
 
 	public ConfigAccountStore(AutoLoginConfig config) {
@@ -36,8 +33,13 @@ public final class ConfigAccountStore implements AccountStore {
 	public List<Account> all() {
 		List<Account> accounts = new ArrayList<>();
 
-		for (String line : rows()) {
-			AccountLine.parse(line).ifPresent(parsed -> accounts.add(parsed.toAccount()));
+		for (AutoLoginConfig.LoginEntry entry : entries()) {
+			if (entry == null || entry.label == null || entry.label.isBlank()) {
+				continue;
+			}
+
+			accounts.add(new Account(entry.label.trim(), entry.label.trim(), entry.password,
+				ServerKey.normalize(entry.server), System.currentTimeMillis(), 0L, 0));
 		}
 
 		accounts.sort(Comparator.comparingLong((Account account) -> lastUsed.getOrDefault(account.id(), 0L)).reversed());
@@ -68,43 +70,38 @@ public final class ConfigAccountStore implements AccountStore {
 			throw new IllegalArgumentException("passwords cannot contain spaces or line breaks");
 		}
 
-		String clean = label == null || label.isBlank() ? "main" : label.trim().replace("|", "");
-		if (clean.isEmpty()) {
-			throw new IllegalArgumentException("a login needs a label");
-		}
-
+		String clean = label == null || label.isBlank() ? "main" : label.trim();
 		remove(clean);
 
 		Account account = new Account(clean, clean, password, ServerKey.normalize(server), System.currentTimeMillis(), 0L, 0);
-		rows().add(AccountLine.format(clean, account.serverKey(), password));
+		entries().add(new AutoLoginConfig.LoginEntry(clean, account.serverKey(), password));
 		save();
 		return account;
 	}
 
 	@Override
 	public void update(Account account) {
-		List<String> rows = rows();
+		List<AutoLoginConfig.LoginEntry> entries = entries();
 
-		for (int i = 0; i < rows.size(); i++) {
-			Optional<AccountLine> existing = AccountLine.parse(rows.get(i));
-			if (existing.isPresent() && existing.get().label().equalsIgnoreCase(account.label())) {
-				rows.set(i, AccountLine.format(account.label(), account.serverKey(), account.password()));
+		for (AutoLoginConfig.LoginEntry entry : entries) {
+			if (entry != null && entry.label != null && entry.label.equalsIgnoreCase(account.label())) {
+				entry.label = account.label();
+				entry.server = account.serverKey();
+				entry.password = account.password();
 				save();
 				return;
 			}
 		}
 
-		rows.add(AccountLine.format(account.label(), account.serverKey(), account.password()));
+		entries.add(new AutoLoginConfig.LoginEntry(account.label(), account.serverKey(), account.password()));
 		save();
 	}
 
 	@Override
 	public boolean remove(String id) {
 		String wanted = id == null ? "" : id.trim().toLowerCase(Locale.ROOT);
-		List<String> rows = rows();
-		boolean removed = rows.removeIf(row -> AccountLine.parse(row)
-			.map(line -> line.label().toLowerCase(Locale.ROOT).equals(wanted))
-			.orElse(false));
+		boolean removed = entries().removeIf(entry ->
+			entry != null && entry.label != null && entry.label.trim().toLowerCase(Locale.ROOT).equals(wanted));
 
 		if (removed) {
 			save();
@@ -123,13 +120,13 @@ public final class ConfigAccountStore implements AccountStore {
 		return Optional.empty();
 	}
 
-	/** The live list behind the Cloth screen; edits here show up on the next save. */
-	private List<String> rows() {
-		if (config.accounts == null) {
-			config.accounts = new ArrayList<>();
+	/** The live list behind the Cloth screen. */
+	private List<AutoLoginConfig.LoginEntry> entries() {
+		if (config.logins == null) {
+			config.logins = new ArrayList<>();
 		}
 
-		return config.accounts;
+		return config.logins;
 	}
 
 	private void save() {

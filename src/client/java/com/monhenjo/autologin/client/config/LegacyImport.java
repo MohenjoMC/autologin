@@ -2,7 +2,6 @@ package com.monhenjo.autologin.client.config;
 
 import com.monhenjo.autologin.AutoLogin;
 import com.monhenjo.autologin.core.Account;
-import com.monhenjo.autologin.core.AccountLine;
 import com.monhenjo.autologin.core.AccountStore;
 import com.monhenjo.autologin.storage.VaultAccountStore;
 
@@ -20,7 +19,7 @@ public final class LegacyImport {
 	}
 
 	public static int importInto(AutoLoginConfig config, AccountStore store, Path configDirectory) {
-		if (!config.accounts.isEmpty()) {
+		if (!config.logins.isEmpty()) {
 			return 0;
 		}
 
@@ -31,7 +30,7 @@ public final class LegacyImport {
 
 		List<Account> accounts = vault.all();
 		for (Account account : accounts) {
-			config.accounts.add(AccountLine.format(account.label(), account.serverKey(), account.password()));
+			config.logins.add(new AutoLoginConfig.LoginEntry(account.label(), account.serverKey(), account.password()));
 		}
 
 		if (!accounts.isEmpty()) {
