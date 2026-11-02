@@ -237,8 +237,12 @@ public final class AutoLoginRuntime {
 		String command = line.get();
 		String payload = command.startsWith("/") ? command.substring(1) : command;
 
+		// Straight to the packet, not through sendCommand: /login and /register are also our own
+		// client commands, so sendCommand would be intercepted, forwarded and logged twice.
+		onOutgoingCommand(payload);
+
 		try {
-			connection.sendCommand(payload);
+			connection.send(new ServerboundChatCommandPacket(payload));
 		} catch (RuntimeException e) {
 			lastError = e.getMessage() == null ? e.toString() : e.getMessage();
 			AutoLogin.LOGGER.warn("autologin: sending {} failed: {}", LoginVerbs.describeCommand(command), lastError);
